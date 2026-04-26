@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Metrics</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; color: #111; }
+    h1, h2 { margin-bottom: 8px; }
+    .grid { display: grid; grid-template-columns: repeat(4, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 12px; }
+    .value { font-size: 20px; font-weight: 700; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 14px; }
+    .actions { display: flex; gap: 8px; }
+    button { cursor: pointer; }
+    .muted { color: #666; }
+  </style>
+</head>
+<body>
+  <h1>Админка метрик</h1>
+  <p class="muted">Страница не связана с основным интерфейсом и открывается только по прямому URL.</p>
+
+  <section>
+    <h2>Сводка</h2>
+    <div class="grid">
+      <div class="card"><div>Конверсия в скачивание</div><div id="conversion" class="value">-</div></div>
+      <div class="card"><div>Количество пустых выдач</div><div id="emptyCount" class="value">-</div></div>
+      <div class="card"><div>Доля плохих выдач</div><div id="poorRate" class="value">-</div></div>
+      <div class="card"><div>Удачные поиски</div><div id="successfulSearches" class="value">-</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Проблемные запросы</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Запрос</th>
+          <th>Выбранные метки</th>
+          <th>Результаты</th>
+          <th>80%+</th>
+          <th>Ignored</th>
+          <th>Действия</th>
+        </tr>
+      </thead>
+      <tbody id="badQueriesBody"></tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Ошибки API (последние 100)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Маршрут</th>
+          <th>Код</th>
+          <th>Сообщение</th>
+          <th>Время</th>
+        </tr>
+      </thead>
+      <tbody id="errorsBody"></tbody>
+    </table>
+  </section>
+
+  <script src="/admin/metrics.js"></script>
+</body>
+</html>

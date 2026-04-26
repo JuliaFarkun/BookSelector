@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Подбор книг</title>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <header class="header">
+    <div class="header__inner">
+      <h1 class="logo">Книго<span>подбор</span></h1>
+      <p class="tagline">Введите запрос, при необходимости отметьте жанры и метки — затем «Найти». Enter в поле поиска тоже запускает поиск.</p>
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="panel" aria-label="Поиск и фильтры">
+      <form id="search-form" class="search-row" action="#" method="get">
+        <label class="sr-only" for="search-input">Поиск</label>
+        <input type="text" id="search-input" class="search-input" placeholder="Название, автор или слово из описания…" autocomplete="off" enterkeyhint="search">
+        <button type="submit" id="search-btn" class="btn btn--primary">Найти</button>
+        <button type="button" id="reset-btn" class="btn btn--ghost">Сбросить</button>
+      </form>
+
+      <p class="filter-hint">Откройте нужные списки категорий, отметьте метки, затем нажмите «Найти».</p>
+
+      <div class="filter-actions" id="category-filters"></div>
+      <div id="filter-summaries"></div>
+    </section>
+
+    <section class="results" aria-live="polite">
+      <div class="results__head">
+        <h2 class="results__title">Результаты</h2>
+        <span id="results-count" class="results__count"></span>
+      </div>
+      <p id="status" class="status" role="status"></p>
+      <div id="book-grid" class="book-grid"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Каталог и темы берутся из SQL-дампа БД. Запуск: <code>npm start</code> → <code>http://localhost:3780</code>.</p>
+  </footer>
+
+  <script src="/js/app.js" type="module"></script>
+</body>
+</html>
