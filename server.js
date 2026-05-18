@@ -59,7 +59,7 @@ app.get("/api/catalog", async (_req, res, next) => {
        ORDER BY t.name ASC`
     );
     const categoriesQuery = await pool.query(
-      `SELECT c.id, c.name, t.id AS tag_id, t.name AS tag_name
+      `SELECT c.id, c.name, c.description AS category_description, t.id AS tag_id, t.name AS tag_name, t.description AS tag_description
        FROM categories c
        LEFT JOIN tags t ON t.category_id = c.id
        ORDER BY c.name ASC, t.name ASC`
@@ -84,10 +84,10 @@ app.get("/api/catalog", async (_req, res, next) => {
     for (const row of categoriesQuery.rows) {
       const id = Number(row.id);
       if (!categoriesById.has(id)) {
-        categoriesById.set(id, { id, name: row.name, tags: [] });
+        categoriesById.set(id, { id, name: row.name, description: row.category_description || '', tags: [] });
       }
       if (row.tag_id) {
-        categoriesById.get(id).tags.push({ id: Number(row.tag_id), name: row.tag_name });
+        categoriesById.get(id).tags.push({ id: Number(row.tag_id), name: row.tag_name, description: row.tag_description || '' });
       }
     }
 

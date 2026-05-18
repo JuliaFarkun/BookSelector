@@ -15,6 +15,10 @@ let currentBooks = [];
 const tagNameById = new Map();
 const categoryViews = [];
 
+// Глобальные переменные для управления всплывающими подсказками
+let tooltipElement = null;
+let tooltipTimeout = null;
+
 function slug(s) {
   return s.replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "") || "x";
 }
@@ -35,6 +39,27 @@ function populateCheckboxPanel(panel, items, prefix, onChange) {
     input.id = id;
     const span = document.createElement("span");
     span.textContent = labelText;
+    
+    // Добавляем всплывающую подсказку, если есть описание
+    if (item.description) {
+      span.className = "has-tooltip";
+      span.setAttribute("data-tooltip", item.description);
+      
+      // Создаем таймеры для показа/скрытия подсказки
+      let tooltipTimer;
+      
+      span.addEventListener("mouseenter", () => {
+        clearTimeout(tooltipTimer);
+        showTooltip(span);
+      });
+      
+      span.addEventListener("mouseleave", () => {
+        tooltipTimer = setTimeout(() => {
+          hideTooltip();
+        }, 400);
+      });
+    }
+    
     label.appendChild(input);
     label.appendChild(span);
     frag.appendChild(label);
@@ -241,7 +266,7 @@ function renderCategoryFilters() {
 
     populateCheckboxPanel(
       panel,
-      (category.tags || []).map((tag) => ({ value: Number(tag.id), label: tag.name })),
+      (category.tags || []).map((tag) => ({ value: Number(tag.id), label: tag.name, description: tag.description })),
       `tag-${category.id}`,
       updateSummaries
     );
@@ -330,6 +355,33 @@ async function init() {
   await sendMetric("entry");
   applySearch({ trackMetric: false });
   updateSummaries();
+}
+
+// Функции для управления всплывающими подсказками
+function showTooltip(element) {
+  const tooltipText = element.getAttribute("data-tooltip");
+  if (!tooltipText) return;
+  
+  hideTooltip();
+  
+  tooltipElement = document.createElement("div");
+  tooltipElement.className = "tooltip";
+  tooltipElement.textContent = tooltipText;
+  
+  const rect = element.getBoundingClientRect();
+  tooltipElement.style.position = "fixed";
+  tooltipElement.style.left = rect.left + "px";
+  tooltipElement.style.top = (rect.top - 30) + "px";
+  tooltipElement.style.zIndex = "1000";
+  
+  document.body.appendChild(tooltipElement);
+}
+
+function hideTooltip() {
+  if (tooltipElement) {
+    tooltipElement.remove();
+    tooltipElement = null;
+  }
 }
 
 init();

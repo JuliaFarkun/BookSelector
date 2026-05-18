@@ -315,6 +315,26 @@ body {
   font-size: 0.8rem;
 }
 
+/* Стили для всплывающих подсказок */
+.has-tooltip {
+  position: relative;
+  cursor: help;
+}
+
+.tooltip {
+  position: fixed;
+  background: #1a222d;
+  color: #e8eef4;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  z-index: 1000;
+  max-width: 300px;
+  word-wrap: break-word;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border: 1px solid #2d3a4a;
+}
+
 @media (max-width: 520px) {
   .search-row .btn {
     flex: 1;
