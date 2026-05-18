@@ -431,6 +431,14 @@ body {
   transition: border-color 0.15s;
 }
 
+.card--clickable {
+  cursor: pointer;
+}
+
+.card--clickable:hover {
+  border-color: #3d4f63;
+}
+
 .card:hover {
   border-color: #3d4f63;
 }
@@ -457,6 +465,27 @@ body {
   font-size: 0.88rem;
   color: #b8c5d4;
   flex: 1;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.45;
+  max-height: calc(1.45em * 3);
+}
+
+.card__desc--empty {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.card__actions {
+  margin-top: 0.25rem;
+}
+
+.card__more {
+  width: 100%;
 }
 
 .card__meta {
@@ -466,13 +495,99 @@ body {
   margin-top: 0.25rem;
 }
 
-.card__actions {
-  margin-top: 0.4rem;
+.book-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
 }
 
-.card__download {
-  display: inline-block;
-  text-decoration: none;
+.book-modal[hidden] {
+  display: none !important;
+}
+
+.book-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 8, 12, 0.78);
+  backdrop-filter: blur(4px);
+}
+
+.book-modal__dialog {
+  position: relative;
+  z-index: 1;
+  width: min(920px, 100%);
+  max-height: min(92vh, 900px);
+  overflow: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 2px);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  padding: 1.35rem 1.5rem 1.5rem;
+}
+
+.book-modal__close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.85rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.book-modal__close:hover {
+  border-color: var(--muted);
+}
+
+.book-modal__title {
+  margin: 0 2rem 0.35rem 0;
+  font-size: 1.45rem;
+  line-height: 1.25;
+}
+
+.book-modal__author {
+  margin: 0 0 0.35rem;
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.book-modal__score {
+  margin: 0 0 0.85rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.book-modal__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.book-modal__desc {
+  margin: 0;
+  font-size: 0.98rem;
+  line-height: 1.65;
+  color: #c8d4e0;
+  white-space: pre-wrap;
+}
+
+.book-modal__actions {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+body.modal-open {
+  overflow: hidden;
 }
 
 .pill {

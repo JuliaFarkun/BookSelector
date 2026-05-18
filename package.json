@@ -6,7 +6,14 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "enrich:descriptions": "node scripts/enrich-descriptions-from-litres.js",
+    "fetch:descriptions": "node scripts/fetch-descriptions-to-cache.js",
+    "fetch:descriptions:missing": "node scripts/fetch-descriptions-to-cache.js --missing",
+    "fetch:all-descriptions": "node scripts/fetch-descriptions-to-cache.js --missing && node scripts/apply-cache-to-db.js",
+    "patch:sql-descriptions": "node scripts/apply-descriptions-to-sql-dump.js",
+    "apply:cache": "node scripts/apply-cache-to-db.js",
+    "setup:local": "node scripts/setup-local-db.js"
   },
   "engines": {
     "node": ">=18"

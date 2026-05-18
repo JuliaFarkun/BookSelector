@@ -9,6 +9,13 @@ const els = {
   bookGrid: document.getElementById("book-grid"),
   resultsCount: document.getElementById("results-count"),
   status: document.getElementById("status"),
+  bookModal: document.getElementById("book-modal"),
+  bookModalTitle: document.getElementById("book-modal-title"),
+  bookModalAuthor: document.getElementById("book-modal-author"),
+  bookModalScore: document.getElementById("book-modal-score"),
+  bookModalTags: document.getElementById("book-modal-tags"),
+  bookModalDesc: document.getElementById("book-modal-desc"),
+  bookModalDownload: document.getElementById("book-modal-download"),
 };
 
 const sessionId = `s_${crypto.randomUUID()}`;
@@ -129,19 +136,23 @@ function renderBooks(rankedBooks) {
   for (const item of rankedBooks) {
     const b = item.book;
     const article = document.createElement("article");
-    article.className = "card";
+    article.className = "card card--clickable";
     article.innerHTML = `
       <h3 class="card__title"></h3>
       <p class="card__author"></p>
       <p class="card__year"></p>
       <p class="card__desc"></p>
       <div class="card__meta"></div>
-      <div class="card__actions"></div>
+      <div class="card__actions">
+        <button type="button" class="btn btn--ghost card__more">Подробнее</button>
+      </div>
     `;
     article.querySelector(".card__title").textContent = b.title;
     article.querySelector(".card__author").textContent = b.author;
     article.querySelector(".card__year").textContent = `Релевантность: ${(item.score * 100).toFixed(0)}%`;
-    article.querySelector(".card__desc").textContent = b.description || "";
+    const desc = article.querySelector(".card__desc");
+    desc.textContent = b.description || "Описание пока не добавлено.";
+    if (!b.description) desc.classList.add("card__desc--empty");
     const meta = article.querySelector(".card__meta");
     for (const t of b.tags || []) {
       const span = document.createElement("span");
@@ -150,20 +161,48 @@ function renderBooks(rankedBooks) {
       meta.appendChild(span);
     }
 
-    const actions = article.querySelector(".card__actions");
-    const downloadBtn = document.createElement("a");
-    downloadBtn.className = "btn btn--primary card__download";
-    downloadBtn.target = "_blank";
-    downloadBtn.rel = "noopener noreferrer";
-    downloadBtn.textContent = "Скачать";
-    downloadBtn.href = b.downloadUrl || "#";
-    downloadBtn.addEventListener("click", () => {
-      sendMetric("download_click", { bookId: b.id, title: b.title });
+    const openDetail = () => openBookModal(b, item.score);
+    article.addEventListener("click", (e) => {
+      if (e.target.closest(".card__more")) return;
+      openDetail();
     });
-    actions.appendChild(downloadBtn);
+    article.querySelector(".card__more").addEventListener("click", (e) => {
+      e.stopPropagation();
+      openDetail();
+    });
 
     els.bookGrid.appendChild(article);
   }
+}
+
+function openBookModal(book, score) {
+  els.bookModalTitle.textContent = book.title;
+  els.bookModalAuthor.textContent = book.author;
+  els.bookModalScore.textContent = `Релевантность: ${(score * 100).toFixed(0)}%`;
+
+  els.bookModalTags.innerHTML = "";
+  for (const t of book.tags || []) {
+    const span = document.createElement("span");
+    span.className = "pill pill--tag";
+    span.textContent = t;
+    els.bookModalTags.appendChild(span);
+  }
+
+  els.bookModalDesc.textContent = book.description || "Описание пока не добавлено.";
+
+  els.bookModalDownload.href = book.downloadUrl || "#";
+  els.bookModalDownload.onclick = () => {
+    sendMetric("download_click", { bookId: book.id, title: book.title });
+  };
+
+  els.bookModal.hidden = false;
+  document.body.classList.add("modal-open");
+  els.bookModal.querySelector(".book-modal__close")?.focus();
+}
+
+function closeBookModal() {
+  els.bookModal.hidden = true;
+  document.body.classList.remove("modal-open");
 }
 
 function appendSummaryChips(container, names, kind) {
@@ -407,12 +446,19 @@ els.resetBtn.addEventListener("click", () => {
   applySearch({ trackMetric: true });
 });
 
+els.bookModal.querySelectorAll("[data-modal-close]").forEach((el) => {
+  el.addEventListener("click", closeBookModal);
+});
+
 document.addEventListener("click", () => {
   closeAllDropdowns();
 });
 
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") closeAllDropdowns();
+  if (e.key === "Escape") {
+    closeAllDropdowns();
+    if (!els.bookModal.hidden) closeBookModal();
+  }
 });
 
 async function sendMetric(eventType, payload = {}) {

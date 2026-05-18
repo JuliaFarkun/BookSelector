@@ -58,6 +58,23 @@
     <p>Каталог и темы берутся из SQL-дампа БД. Запуск: <code>npm start</code> → <code>http://localhost:3780</code>.</p>
   </footer>
 
+  <div id="book-modal" class="book-modal" hidden>
+    <div class="book-modal__backdrop" data-modal-close tabindex="-1"></div>
+    <div class="book-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="book-modal-title">
+      <button type="button" class="book-modal__close" data-modal-close aria-label="Закрыть">×</button>
+      <div class="book-modal__body">
+        <h2 id="book-modal-title" class="book-modal__title"></h2>
+        <p id="book-modal-author" class="book-modal__author"></p>
+        <p id="book-modal-score" class="book-modal__score"></p>
+        <div id="book-modal-tags" class="book-modal__tags"></div>
+        <div id="book-modal-desc" class="book-modal__desc"></div>
+        <div class="book-modal__actions">
+          <a id="book-modal-download" class="btn btn--primary" href="#" target="_blank" rel="noopener noreferrer">Скачать на ЛитРес</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="/js/app.js" type="module"></script>
 </body>
 </html>
