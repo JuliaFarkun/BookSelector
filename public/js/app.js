@@ -2,8 +2,10 @@ const els = {
   form: document.getElementById("search-form"),
   searchInput: document.getElementById("search-input"),
   resetBtn: document.getElementById("reset-btn"),
-  categoryFilters: document.getElementById("category-filters"),
+  categoryFiltersInclude: document.getElementById("category-filters-include"),
+  categoryFiltersExclude: document.getElementById("category-filters-exclude"),
   filterSummaries: document.getElementById("filter-summaries"),
+  filterSummariesWrap: document.getElementById("filter-summaries-wrap"),
   bookGrid: document.getElementById("book-grid"),
   resultsCount: document.getElementById("results-count"),
   status: document.getElementById("status"),
@@ -14,6 +16,11 @@ let catalog = { books: [], categories: [], tags: [] };
 let currentBooks = [];
 const tagNameById = new Map();
 const categoryViews = [];
+const categoryExcludeViews = [];
+
+function allCategoryDropdownViews() {
+  return [...categoryViews, ...categoryExcludeViews];
+}
 
 function slug(s) {
   return s.replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "") || "x";
@@ -76,6 +83,9 @@ function rankBooks() {
   const selectedTagIds = categoryViews.flatMap((view) =>
     getChecked(view.panel).map((x) => Number(x))
   );
+  const excludedTagIds = categoryExcludeViews.flatMap((view) =>
+    getChecked(view.panel).map((x) => Number(x))
+  );
 
   const ranked = catalog.books
     .map((b) => {
@@ -91,12 +101,18 @@ function rankBooks() {
       return { book: b, score: tagScore, textScore };
     })
     .filter((x) => !q || x.textScore > 0)
+    .filter((x) => {
+      if (!excludedTagIds.length) return true;
+      const bookTagIds = x.book.tagIds || [];
+      return !excludedTagIds.some((exId) => bookTagIds.includes(exId));
+    })
     .sort((a, b) => b.score - a.score || b.textScore - a.textScore);
 
   return {
     ranked,
     query: q,
     selectedTagIds,
+    excludedTagIds,
   };
 }
 
@@ -150,22 +166,81 @@ function renderBooks(rankedBooks) {
   }
 }
 
+function appendSummaryChips(container, names, kind) {
+  if (!names.length) {
+    const empty = document.createElement("span");
+    empty.className = "filter-summary-empty";
+    empty.textContent = "—";
+    container.appendChild(empty);
+    return;
+  }
+  for (const name of names) {
+    const chip = document.createElement("span");
+    chip.className = `filter-summary-chip filter-summary-chip--${kind}`;
+    chip.textContent = name;
+    container.appendChild(chip);
+  }
+}
+
 function updateSummaries() {
   els.filterSummaries.innerHTML = "";
   const frag = document.createDocumentFragment();
-  for (const view of categoryViews) {
-    const selectedTagNames = getChecked(view.panel).map(
+  let hasAnySelection = false;
+
+  for (const category of catalog.categories || []) {
+    const incView = categoryViews.find((v) => v.categoryId === category.id);
+    const excView = categoryExcludeViews.find((v) => v.categoryId === category.id);
+    if (!incView || !excView) continue;
+
+    const includeNames = getChecked(incView.panel).map(
       (id) => tagNameById.get(Number(id)) || `Тег ${id}`
     );
-    const p = document.createElement("p");
-    p.className = "filter-summary";
-    p.textContent =
-      selectedTagNames.length === 0
-        ? `${view.name}: ничего не выбрано`
-        : `${view.name}: выбрано — ${selectedTagNames.join(", ")}.`;
-    frag.appendChild(p);
+    const excludeNames = getChecked(excView.panel).map(
+      (id) => tagNameById.get(Number(id)) || `Тег ${id}`
+    );
+
+    if (!includeNames.length && !excludeNames.length) continue;
+    hasAnySelection = true;
+
+    const card = document.createElement("article");
+    card.className = "filter-summary-card";
+
+    const title = document.createElement("h4");
+    title.className = "filter-summary-card__title";
+    title.textContent = category.name;
+    card.appendChild(title);
+
+    const includeRow = document.createElement("div");
+    includeRow.className = "filter-summary-row filter-summary-row--include";
+    const includeLabel = document.createElement("span");
+    includeLabel.className = "filter-summary-row__label";
+    includeLabel.textContent = "Нужны";
+    const includeChips = document.createElement("div");
+    includeChips.className = "filter-summary-chips";
+    appendSummaryChips(includeChips, includeNames, "include");
+    includeRow.appendChild(includeLabel);
+    includeRow.appendChild(includeChips);
+    card.appendChild(includeRow);
+
+    const excludeRow = document.createElement("div");
+    excludeRow.className = "filter-summary-row filter-summary-row--exclude";
+    const excludeLabel = document.createElement("span");
+    excludeLabel.className = "filter-summary-row__label";
+    excludeLabel.textContent = "Без";
+    const excludeChips = document.createElement("div");
+    excludeChips.className = "filter-summary-chips";
+    appendSummaryChips(excludeChips, excludeNames, "exclude");
+    excludeRow.appendChild(excludeLabel);
+    excludeRow.appendChild(excludeChips);
+    card.appendChild(excludeRow);
+
+    frag.appendChild(card);
   }
-  els.filterSummaries.appendChild(frag);
+
+  els.filterSummariesWrap.hidden = !hasAnySelection;
+  if (hasAnySelection) {
+    els.filterSummaries.appendChild(frag);
+  }
 }
 
 function applySearch(options = {}) {
@@ -180,10 +255,12 @@ function applySearch(options = {}) {
       ? "ничего не найдено"
       : `${currentBooks.length} ${plural(currentBooks.length, "книга", "книги", "книг")}`;
   updateSummaries();
+  updateCrossPanelLocks();
   if (trackMetric) {
     sendMetric("search_quality", {
       query: result.query,
       selectedTagIds: result.selectedTagIds,
+      excludedTagIds: result.excludedTagIds,
       resultCount: currentBooks.length,
       topScore: currentBooks[0]?.score || 0,
       count80Plus,
@@ -214,51 +291,100 @@ function toggleDropdown(view) {
 }
 
 function closeAllDropdowns() {
-  categoryViews.forEach((view) => closeDropdown(view));
+  allCategoryDropdownViews().forEach((view) => closeDropdown(view));
+}
+
+function updateCrossPanelLocks() {
+  const includeSelected = new Set(
+    categoryViews.flatMap((view) => getChecked(view.panel).map((x) => Number(x)))
+  );
+  const excludeSelected = new Set(
+    categoryExcludeViews.flatMap((view) => getChecked(view.panel).map((x) => Number(x)))
+  );
+  for (const view of categoryViews) {
+    for (const cb of view.panel.querySelectorAll('input[type="checkbox"]')) {
+      const id = Number(cb.value);
+      const blocked = excludeSelected.has(id);
+      cb.disabled = blocked;
+      cb.closest(".check-row")?.classList.toggle("check-row--blocked", blocked);
+    }
+  }
+  for (const view of categoryExcludeViews) {
+    for (const cb of view.panel.querySelectorAll('input[type="checkbox"]')) {
+      const id = Number(cb.value);
+      const blocked = includeSelected.has(id);
+      cb.disabled = blocked;
+      cb.closest(".check-row")?.classList.toggle("check-row--blocked", blocked);
+    }
+  }
+}
+
+function onFilterCheckboxChange() {
+  updateSummaries();
+  updateCrossPanelLocks();
+}
+
+function buildCategoryDropdown(category, checkboxPrefix) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "dropdown";
+  wrapper.dataset.dropdown = "true";
+
+  const toggle = document.createElement("button");
+  toggle.type = "button";
+  toggle.className = "btn btn--ghost dropdown__toggle";
+  toggle.setAttribute("aria-expanded", "false");
+  toggle.setAttribute("aria-haspopup", "true");
+  toggle.innerHTML = `${category.name} <span class="dropdown__chevron" aria-hidden="true">▾</span>`;
+
+  const panel = document.createElement("div");
+  panel.className = "dropdown__panel";
+  panel.setAttribute("role", "group");
+  panel.setAttribute("aria-label", category.name);
+  panel.hidden = true;
+
+  populateCheckboxPanel(
+    panel,
+    (category.tags || []).map((tag) => ({ value: Number(tag.id), label: tag.name })),
+    checkboxPrefix,
+    onFilterCheckboxChange
+  );
+
+  const view = { categoryId: category.id, name: category.name, toggle, panel };
+
+  toggle.addEventListener("click", (e) => {
+    e.stopPropagation();
+    toggleDropdown(view);
+  });
+  panel.addEventListener("click", (e) => e.stopPropagation());
+
+  wrapper.appendChild(toggle);
+  wrapper.appendChild(panel);
+  return { view, wrapper };
 }
 
 function renderCategoryFilters() {
-  els.categoryFilters.innerHTML = "";
+  els.categoryFiltersInclude.innerHTML = "";
+  els.categoryFiltersExclude.innerHTML = "";
   categoryViews.length = 0;
+  categoryExcludeViews.length = 0;
 
   for (const category of catalog.categories || []) {
-    const wrapper = document.createElement("div");
-    wrapper.className = "dropdown";
-    wrapper.dataset.dropdown = "true";
-
-    const toggle = document.createElement("button");
-    toggle.type = "button";
-    toggle.className = "btn btn--ghost dropdown__toggle";
-    toggle.setAttribute("aria-expanded", "false");
-    toggle.setAttribute("aria-haspopup", "true");
-    toggle.innerHTML = `${category.name} <span class="dropdown__chevron" aria-hidden="true">▾</span>`;
-
-    const panel = document.createElement("div");
-    panel.className = "dropdown__panel";
-    panel.setAttribute("role", "group");
-    panel.setAttribute("aria-label", category.name);
-    panel.hidden = true;
-
-    populateCheckboxPanel(
-      panel,
-      (category.tags || []).map((tag) => ({ value: Number(tag.id), label: tag.name })),
-      `tag-${category.id}`,
-      updateSummaries
+    const { view: incView, wrapper: incWrap } = buildCategoryDropdown(
+      category,
+      `tag-inc-${category.id}`
     );
+    categoryViews.push(incView);
+    els.categoryFiltersInclude.appendChild(incWrap);
 
-    const view = { categoryId: category.id, name: category.name, toggle, panel };
-    categoryViews.push(view);
-
-    toggle.addEventListener("click", (e) => {
-      e.stopPropagation();
-      toggleDropdown(view);
-    });
-    panel.addEventListener("click", (e) => e.stopPropagation());
-
-    wrapper.appendChild(toggle);
-    wrapper.appendChild(panel);
-    els.categoryFilters.appendChild(wrapper);
+    const { view: excView, wrapper: excWrap } = buildCategoryDropdown(
+      category,
+      `tag-exc-${category.id}`
+    );
+    categoryExcludeViews.push(excView);
+    els.categoryFiltersExclude.appendChild(excWrap);
   }
+
+  updateCrossPanelLocks();
 }
 
 els.form.addEventListener("submit", (e) => {
@@ -271,12 +397,13 @@ els.form.addEventListener("submit", (e) => {
 
 els.resetBtn.addEventListener("click", () => {
   els.searchInput.value = "";
-  categoryViews.forEach((view) => {
+  allCategoryDropdownViews().forEach((view) => {
     view.panel.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
       cb.checked = false;
     });
   });
   closeAllDropdowns();
+  updateCrossPanelLocks();
   applySearch({ trackMetric: true });
 });
 
@@ -318,7 +445,7 @@ async function init() {
     catalog.categories = [{ id: "fallback-tags", name: "Метки", tags: catalog.tags }];
   }
   renderCategoryFilters();
-  if (!categoryViews.length) {
+  if (!categoryViews.length || !categoryExcludeViews.length) {
     els.status.textContent =
       "Фильтры категорий не загружены. Перезапустите сервер, чтобы применились последние изменения API.";
   }
@@ -329,7 +456,6 @@ async function init() {
 
   await sendMetric("entry");
   applySearch({ trackMetric: false });
-  updateSummaries();
 }
 
 init();

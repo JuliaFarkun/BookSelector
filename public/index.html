@@ -10,33 +10,48 @@
   <header class="header">
     <div class="header__inner">
       <h1 class="logo">Книго<span>подбор</span></h1>
-      <p class="tagline">Введите запрос, при необходимости отметьте жанры и метки — затем «Найти». Enter в поле поиска тоже запускает поиск.</p>
+      <p class="tagline">Напишите запрос или выберите метки — и нажмите «Найти».</p>
     </div>
   </header>
 
   <main class="main">
-    <section class="panel" aria-label="Поиск и фильтры">
-      <form id="search-form" class="search-row" action="#" method="get">
-        <label class="sr-only" for="search-input">Поиск</label>
-        <input type="text" id="search-input" class="search-input" placeholder="Название, автор или слово из описания…" autocomplete="off" enterkeyhint="search">
-        <button type="submit" id="search-btn" class="btn btn--primary">Найти</button>
-        <button type="button" id="reset-btn" class="btn btn--ghost">Сбросить</button>
-      </form>
+    <div class="layout">
+      <aside class="sidebar panel" aria-label="Поиск и фильтры">
+        <form id="search-form" class="search-row" action="#" method="get">
+          <label class="sr-only" for="search-input">Поиск</label>
+          <input type="text" id="search-input" class="search-input" placeholder="Название, автор или слово из описания…" autocomplete="off" enterkeyhint="search">
+          <div class="search-row__actions">
+            <button type="submit" id="search-btn" class="btn btn--primary">Найти</button>
+            <button type="button" id="reset-btn" class="btn btn--ghost">Сбросить</button>
+          </div>
+        </form>
 
-      <p class="filter-hint">Откройте нужные списки категорий, отметьте метки, затем нажмите «Найти».</p>
+        <div class="filter-stack" role="group" aria-label="Метки для включения и исключения">
+          <div class="filter-block">
+            <h3 class="filter-block__title">Нужны эти метки</h3>
+            <div class="filter-actions" id="category-filters-include"></div>
+          </div>
+          <div class="filter-block">
+            <h3 class="filter-block__title">Этих меток быть не должно</h3>
+            <div class="filter-actions" id="category-filters-exclude"></div>
+          </div>
+        </div>
 
-      <div class="filter-actions" id="category-filters"></div>
-      <div id="filter-summaries"></div>
-    </section>
+        <div class="filter-summaries-wrap" id="filter-summaries-wrap" hidden>
+          <h3 class="filter-summaries__title">Выбрано</h3>
+          <div id="filter-summaries" class="filter-summaries"></div>
+        </div>
+      </aside>
 
-    <section class="results" aria-live="polite">
-      <div class="results__head">
-        <h2 class="results__title">Результаты</h2>
-        <span id="results-count" class="results__count"></span>
-      </div>
-      <p id="status" class="status" role="status"></p>
-      <div id="book-grid" class="book-grid"></div>
-    </section>
+      <section class="results" aria-live="polite">
+        <div class="results__head">
+          <h2 class="results__title">Результаты</h2>
+          <span id="results-count" class="results__count"></span>
+        </div>
+        <p id="status" class="status" role="status"></p>
+        <div id="book-grid" class="book-grid"></div>
+      </section>
+    </div>
   </main>
 
   <footer class="footer">

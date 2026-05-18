@@ -33,7 +33,8 @@ function isBadSearch(payload = {}) {
 function hasSearchIntent(payload = {}) {
   const query = String(payload.query || "").trim();
   const selectedTagIds = Array.isArray(payload.selectedTagIds) ? payload.selectedTagIds : [];
-  return Boolean(query) || selectedTagIds.length > 0;
+  const excludedTagIds = Array.isArray(payload.excludedTagIds) ? payload.excludedTagIds : [];
+  return Boolean(query) || selectedTagIds.length > 0 || excludedTagIds.length > 0;
 }
 
 app.use(express.json({ limit: "1mb" }));
